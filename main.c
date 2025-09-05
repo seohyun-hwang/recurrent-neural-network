@@ -1,11 +1,32 @@
 #include <stdio.h>
 #include <math.h>
 
+// ReLU function
+float defaultReLU(float input) {
+    if (input <= 0) {
+        return 0; // x < 0 --> max(0, x) = 0
+    }
+    else {
+        return input; // x > 0 --> max(0, x) = x
+    }
+}
+
+// first derivative of ReLU function
+float derivative1ReLU(float input) {
+    if (defaultReLU(input) != 0) {
+        return 1; // x' = 1
+    }
+    else {
+        return 0; // 0' = 0
+    }
+}
+
 int main(void) {
     printf("Welcome to my artificial neural network!");
 
     int total_neuronCount;
     int total_layerCount;
+    int total_uniqueDesiredOutputsetCount;
 
     int layer_firstElementPointer[total_layerCount]; // all layers incl. the input layer and incl. the position immediately after total_neuronCount
     int outputLayer_neuronCount = total_neuronCount - layer_firstElementPointer(total_layerCount - 1);
@@ -14,7 +35,8 @@ int main(void) {
     float bias[total_neuronCount];
     float output[total_neuronCount];
 
-    float desiredOutput[outputLayer_neuronCount];
+    float desiredOutput[outputLayer_neuronCount * total_uniqueDesiredOutputsetCount];
+    int desiredOutput_firstElementPointer[total_uniqueDesiredOutputsetCount];
 
 
     for (int i = 0; i < total_neuronCount; i++) { // setting each neuron's weight and bias to default-values
@@ -32,15 +54,7 @@ int main(void) {
             for (int k = layer_firstElementPointer(i - 1); k <= layer_firstElementPointer(i); k++) {
                 sum += output(k);
             }
-
-            // ReLU activation-function
-            float output = sum * weight[j] + bias[j];
-            if (output < 0) {
-                output(j) = 0;
-            }
-            else {
-                output(j) = output;
-            }
+            output(j) = defaultReLU(sum * weight[j] + bias[j]);
         }
     }
 
@@ -60,16 +74,37 @@ int main(void) {
     }
     mse /= outputLayer_neuronCount;
 
+    for (int i = layer_firstElementPointer[total_layerCount - 1] - 1; i >= layer_firstElementPointer[total_layerCount - 2]; i--) {
+        float sum1 = 0;
+        for (int j = total_neuronCount - 1; j >= layer_firstElementPointer[total_layerCount]; j--) {
 
-    // computing the negative error gradient through backpropagation chain rule
+        }
 
-    // float errorGradient = 2 * currentLayer_effectSumWrtPrevOutput
-    // float currentLayer_effectSum = wjL * ReLU'(zjL) * (ReLU(zjL) - yj)
+        float sum2 = 0;
+        for (int m = 0; m < total_uniqueDesiredOutputsetCount; m++) {
+            for (int j = total_neuronCount - 1; j >= layer_firstElementPointer[total_layerCount]; j--) {
+                sum2 += output[i] + 2 * (weight[j] * derivative1ReLU() * defaultReLU() - desiredOutput[j]);
+            }
+        }
+        output[i] += sum2 / total_uniqueDesiredOutputsetCount;
+    }
+    if (total_layerCount > 3) {
+        for (int n = 0; n < total_layerCount; n++) {
+            for (int i = layer_firstElementPointer[layer_firstElementPointer - n] - 1; i >= layer_firstElementPointer[total_layerCount - 2]; i--) {
+                float sum1 = 0;
+                for (int j = total_neuronCount - 1; j >= layer_firstElementPointer[total_layerCount]; j--) {
 
-    // computing the gradient descent and adjusting weights/biases accordingly
+                }
 
-    // previousLayerNeuron_desiredOutput = ak - currentLayer_effectSumWrtPrevOutput
-    // ak = output(i - 1)?
+                float sum2 = 0;
+                for (int j = total_neuronCount - 1; j >= layer_firstElementPointer[total_layerCount]; j--) {
+                    sum2 += output[i] + 2 * (weight[j] * derivative1ReLU() * defaultReLU() - desiredOutput[j]);
+                }
+                output[i] += sum2;
+            }
+        }
+    }
+
 
 
 
