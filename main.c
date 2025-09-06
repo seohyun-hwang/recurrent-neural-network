@@ -38,11 +38,13 @@ int main(void) {
     int desiredOutput_firstElementPointer[total_uniqueDesiredOutputsetCount];
 
 
+    // not recurring!
     for (int i = 0; i < total_neuronCount; i++) { // setting each neuron's weight and bias to default-values
         weight(i) = 1;
         bias(i) = 0;
     }
 
+    // recurrence starts here
     for (int recurrenceIndex = 0; recurrenceIndex <= total_recurrenceCount; recurrenceIndex++) {
         //sets to each neuron a ReLU-activated output-value
         for (int i = 1; i < total_layerCount; i++) { // skips to the next layer; starts at layer 1 (excl. input-layer which is layer 0)
@@ -51,7 +53,7 @@ int main(void) {
                     break;
                 }
                 float sum = 0;
-                for (int k = layer_firstElementPointer(i - 1); k <= layer_firstElementPointer(i); k++) {
+                for (int k = layer_firstElementPointer(i - 1); k <= layer_firstElementPointer(i); k++) { // sum of previous-layer's outputs
                     sum += output(k);
                 }
                 output(j) = defaultReLU(sum * weight[j] + bias[j]);
@@ -67,40 +69,32 @@ int main(void) {
             output[i] = expf(output[i]) / zjSum; // Softmax completed
         }
 
-        // error calculation using Mean Squared Error
-        float mse = 0;
-        for (int i = layer_firstElementPointer(total_layerCount - 1); i < outputLayer_neuronCount; i++) { // integration of denominator into the whole function
-            mse += (output[i] - desiredOutput[i]) * (output[i] - desiredOutput[i]);
+        // error calculation using cross-entropy loss
+        float cel = 0;
+        for (int i = layer_firstElementPointer(total_layerCount - 1); i < outputLayer_neuronCount; i++) {
+            cel += desiredOutput[i] * logf(output[i]);
         }
-        mse /= outputLayer_neuronCount;
-        printf("Overall Mean-Squared-Error for iteration %d: %f", recurrenceIndex, mse);
+        cel *= -1;
+        printf("Overall Cross-Entropy Loss for iteration %d = %f", recurrenceIndex, cel);
 
 
-        // weight-error-contribution tracing
+        // error-contribution tracing (weight and bias simultaneously for each neuron) with gradient-descent implementation
+        float dC_dYhat = 0; // calculating the last term of d(C)/d(param)
+        for (int i = layer_firstElementPointer(total_layerCount - 1); i < outputLayer_neuronCount; i++) {
+            dC_dYhat += desiredOutput[i] * output[i];
+        }
+        dC_dYhat *= -1;
 
-        // bias-error-contribution tracing
+        for (int i = 0; i < total_neuronCount; i++) { // this should traverse the other way around
+            float sum = 0;
+            for (int k = layer_firstElementPointer(i - 1); k <= layer_firstElementPointer(i); k++) { // sum of previous-layer's outputs
+                sum += output(k);
+            }
 
-
-        // gradiient-descent applied to weights and biases of each neuron
-        for (int i = 0; i < total_neuronCount; i++) {
-            weight(i) -= weightContributionToError[i];
-            bias(i) -= biasContributionToError[i];
+            weight[i] -= sum * derivative1ReLU(bias[i] + weight[i] * sum) * dC_dYhat;
+            bias[i] -= derivative1ReLU(bias[i] + weight[i] * sum) * dC_dYhat;
         }
     }
-
-
-
-
-
-
-
-    // repeat over and over with swapped training input-values
-
-
-    // evaluate the model using testing input-values
-
-    // display the average Mean Squared Error across all tests, then end program
-
 
     return 0;
 }
