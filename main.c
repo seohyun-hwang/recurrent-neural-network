@@ -3,8 +3,8 @@
 
 // SUPPORT-VARIABLES
 //for datasets
-int countTotalIndependent_inputsets_trainingSet = 100; // => the count of how many predicted-outputsets should be derived
-int count_elementsPerInputset_general = 256; // 16px x 16px black-and-white (i.e. monocolored) image
+int countTotalIndependent_inputsets_trainingSet = 100; // the count of inputsets in the training-dataset => the count of how many predicted-outputsets should be derived
+int count_elementsPerInputset_general = 256; // 16px x 16px greyscale image (working with 1 color)
 
 int countTotalIndependent_desiredOutputsets_general = 10; // 0,1,2,3,4,5,6,7,8,9
 int count_elementsPerOutputset_general = 10; // 0,1,2,3,4,5,6,7,8,9
@@ -117,8 +117,7 @@ int main(void) {
         dC_dYhat *= -1;
 
         // modification of weights/biases through backpropagation
-        for (int i = countTotal_layers_general; i > 0; i++) {
-            // going layer by layer
+        for (int i = countTotal_layers_general; i > 0; i--) { // going layer by layer
             //calculating the sum of the previous layer's neurons
             float sumOfNeuronOutputs_previousLayer = 0;
             for (int j = neuronLayer_firstElementPointers(i - 1); j < neuronLayer_firstElementPointers(i); j++) {
