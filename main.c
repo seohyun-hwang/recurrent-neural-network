@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <math.h>
 
+
+
+
+
+
 // SUPPORT-VARIABLES
 //for datasets
 int countTotalIndependent_inputsets_trainingSet = 100; // the count of inputsets in the training-dataset => the count of how many predicted-outputsets should be derived
-int count_elementsPerInputset_general = 256; // 16px x 16px greyscale image (working with 1 color)
+int count_dimensionsPerInputset_general = 256; // 16px x 16px greyscale image (working with 1 color)
 
 int countTotalIndependent_desiredOutputsets_general = 10; // 0,1,2,3,4,5,6,7,8,9
 int count_elementsPerOutputset_general = 10; // 0,1,2,3,4,5,6,7,8,9
@@ -16,9 +21,6 @@ int neuronLayer_firstElementPointers[countTotal_layers_general]; // pointer to t
 
 
 // ANN DATASETS
-//inputset definitions
-float inputsets[count_elementsPerInputset_general * countTotalIndependent_inputsets_trainingSet];
-int inputsets_firstElementPointers[count_elementsPerInputset_general];
 
 //desired-outputset definition
 float desiredOutputsets[count_elementsPerOutputset_general * countTotalIndependent_desiredOutputsets_general]; // elements of desired-outputsets placed mext to each other
@@ -33,9 +35,12 @@ float crossEntropyLoss[countTotalIndependent_inputsets_trainingSet];
 
 
 // ANN INNER-ARCHITECTURE (hidden layers, output layer)
-float weight[countTotal_neurons_general];
-float bias[countTotal_neurons_general];
-float output[countTotal_neurons_general];
+
+int neuronCount_perLayer[countTotal_layers_general];
+
+// [layerIndex] [neuronIndex] [inputsetIndex] [inputDimensionIndex] [output]
+float weights[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][count_dimensionsPerInputset_general][1];
+float biases[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][count_dimensionsPerInputset_general][1];
 
 
 // SUPPORT FUNCTIONS
@@ -58,13 +63,61 @@ int main(void) {
     printf("Welcome to my artificial neural network!");
 
     // default-presetting all neurons' weight/bias values
-    for (int i = 0; i < countTotal_neurons_general; i++) {
-        weight(i) = 1;
-        bias(i) = 0;
+    for (int i = 0; i < countTotal_layers_general; i++) {
+        for (int j = 0; j < neuronCount_perLayer[i]; j++) {
+            for (int layerIndex = 0; layerIndex < countTotal_layers_general; layerIndex++) {
+                for (int neuronIndex = 0; neuronIndex < countTotal_neurons_general; neuronIndex++) {
+                    for (int inputsetIndex = 0; inputsetIndex < countTotalIndependent_inputsets_trainingSet; inputsetIndex++) {
+                        for (int inputDimensionIndex = 0; inputDimensionIndex < count_dimensionsPerInputset_general; inputDimensionIndex++) {
+                            weights[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = 1;
+                            biases[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = 0;
+                        }
+                    }
+                }
+            }
+        }
     }
+
 
     // recurrence begins here
     int recurrenceCount = 0;
+    while (recurrenceCount < 100) { // 100 iterations
+
+        // looping until training set is exhausted
+        for (int m = 0; m < countTotalIndependent_inputsets_trainingSet / countTotalIndependent_desiredOutputsets_general; m++) {
+
+            for (int k = 0; k < countTotalIndependent_desiredOutputsets_general; k++) {
+
+                crossEntropyLoss(k) = 0; // cross-entropy loss value
+
+
+                //forward pass
+                for (int i = 0; i < countTotal_layers_general; i++) {
+                    for (int j = 0; j < neuronCount_perLayer[i]; j++) {
+                        for (int layerIndex = 0; layerIndex < countTotal_layers_general; layerIndex++) {
+                            for (int neuronIndex = 0; neuronIndex < countTotal_neurons_general; neuronIndex++) {
+                                for (int inputsetIndex = 0; inputsetIndex < countTotalIndependent_inputsets_trainingSet; inputsetIndex++) {
+                                    for (int inputDimensionIndex = 0; inputDimensionIndex < count_dimensionsPerInputset_general; inputDimensionIndex++) {
+                                        weights[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = ;
+                                        biases[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = ;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        recurrenceCount++;
+    }
+
+
+
+
+
+    // recurrence begins here
+    //int recurrenceCount = 0;
     while (recurrenceCount < 100) { // 100 iterations
 
         // looping until training set is exhausted
