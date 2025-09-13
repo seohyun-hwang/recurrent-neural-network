@@ -40,7 +40,9 @@ int neuronCount_perLayer[countTotal_layers_general];
 
 // [layerIndex] [neuronIndex] [inputsetIndex] [inputDimensionIndex] [output]
 float weights[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][count_dimensionsPerInputset_general][1];
-float biases[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][count_dimensionsPerInputset_general][1];
+
+// [layerIndex] [neuronIndex] [inputsetIndex] [output]
+float biases[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][1];
 
 
 // SUPPORT FUNCTIONS
@@ -70,8 +72,8 @@ int main(void) {
                     for (int inputsetIndex = 0; inputsetIndex < countTotalIndependent_inputsets_trainingSet; inputsetIndex++) {
                         for (int inputDimensionIndex = 0; inputDimensionIndex < count_dimensionsPerInputset_general; inputDimensionIndex++) {
                             weights[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = 1;
-                            biases[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = 0;
                         }
+                        biases[layerIndex][neuronIndex][inputsetIndex][0] = 0;
                     }
                 }
             }
@@ -94,13 +96,18 @@ int main(void) {
                 //forward pass
                 for (int i = 0; i < countTotal_layers_general; i++) {
                     for (int j = 0; j < neuronCount_perLayer[i]; j++) {
-                        for (int layerIndex = 0; layerIndex < countTotal_layers_general; layerIndex++) {
+                        for (int layerIndex = 1; layerIndex < countTotal_layers_general; layerIndex++) {
+
+                            //calculating the sum of the previous layer's neurons
+                            float sumOfNeuronOutputs_previousLayer = 0;
                             for (int neuronIndex = 0; neuronIndex < countTotal_neurons_general; neuronIndex++) {
+
                                 for (int inputsetIndex = 0; inputsetIndex < countTotalIndependent_inputsets_trainingSet; inputsetIndex++) {
                                     for (int inputDimensionIndex = 0; inputDimensionIndex < count_dimensionsPerInputset_general; inputDimensionIndex++) {
                                         weights[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = ;
-                                        biases[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = ;
+
                                     }
+                                    biases[layerIndex][neuronIndex][inputsetIndex][0] = ;
                                 }
                             }
                         }
