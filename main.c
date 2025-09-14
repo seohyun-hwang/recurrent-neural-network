@@ -38,12 +38,14 @@ float crossEntropyLoss[countTotalIndependent_inputsets_trainingSet];
 
 int neuronCount_perLayer[countTotal_layers_general];
 
-// [layerIndex] [neuronIndex] [inputsetIndex] [inputDimensionIndex] [output]
+// [layerIndex] [neuronIndex] [inputsetIndex] [inputDimensionIndex] [weight-value]
 float weights[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][count_dimensionsPerInputset_general][1];
 
-// [layerIndex] [neuronIndex] [inputsetIndex] [output]
+// [layerIndex] [neuronIndex] [inputsetIndex] [bias-value]
 float biases[countTotal_layers_general][countTotal_neurons_general][countTotalIndependent_inputsets_trainingSet][1];
 
+// [layerIndex] [neuronIndex] [output-value]
+float outputs[countTotal_layers_general][countTotal_neurons_general][1];
 
 // SUPPORT FUNCTIONS
 float defaultReLU(float input) { // ReLU function
@@ -98,17 +100,18 @@ int main(void) {
                     for (int j = 0; j < neuronCount_perLayer[i]; j++) {
                         for (int layerIndex = 1; layerIndex < countTotal_layers_general; layerIndex++) {
 
-                            //calculating the sum of the previous layer's neurons
-                            float sumOfNeuronOutputs_previousLayer = 0;
                             for (int neuronIndex = 0; neuronIndex < countTotal_neurons_general; neuronIndex++) {
 
                                 for (int inputsetIndex = 0; inputsetIndex < countTotalIndependent_inputsets_trainingSet; inputsetIndex++) {
                                     for (int inputDimensionIndex = 0; inputDimensionIndex < count_dimensionsPerInputset_general; inputDimensionIndex++) {
-                                        weights[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] = ;
+
+                                        outputs[layerIndex][neuronIndex][0] += (weights[layerIndex][neuronIndex][inputsetIndex][inputDimensionIndex][0] * outputs[layerIndex - 1][neuronIndex][0]); // contributing to the sum of the previous layer's neurons
 
                                     }
-                                    biases[layerIndex][neuronIndex][inputsetIndex][0] = ;
+                                    outputs[layerIndex][neuronIndex][0] += biases[layerIndex][neuronIndex][inputsetIndex][0];
                                 }
+                                // ReLU activation
+                                outputs[layerIndex][neuronIndex][0] = defaultReLU(outputs[layerIndex][neuronIndex][0]);
                             }
                         }
                     }
@@ -122,6 +125,8 @@ int main(void) {
 
 
 
+
+    // PREVIOUS DRAFT
 
     // recurrence begins here
     //int recurrenceCount = 0;
