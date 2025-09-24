@@ -113,88 +113,54 @@ int main(void) {
                                 // ReLU activation
                                 outputs[layerIndex][neuronIndex][0] = defaultReLU(outputs[layerIndex][neuronIndex][0]);
                             }
+
+                            if (layerIndex == countTotal_layers_general - 1) { // last layer
+                                //unload output values, apply Softmax on them, then load those Softmax-modified values into predictedOutputs
+                                float zjSum = 0; // make a zj-sum first (for Softmax)
+                                for (int l = predictedOutputsets_firstElementPointers(k - 1); l < predictedOutputsets_firstElementPointers(k); l++) { // traverse through predictedOutputsets to gauge how many outputs are being dealt with
+                                    zjSum += expf(output[i]);
+                                }
+                                for (int l = predictedOutputsets_firstElementPointers(k - 1); l < predictedOutputsets_firstElementPointers(k); l++) {
+                                    predictedOutputsets(l) = expf(output(predictedOutputsets(k) + l)) / zjSum; // apply zj-sum to each output of the output layer
+                                }
+
+                                // find the cross-entropy-loss
+                                float celTemp = 0;
+                                for (int l = predictedOutputsets_firstElementPointers(k - 1); l < predictedOutputsets_firstElementPointers(k); l++) { // traverse through predictedOutputsets to gauge how many outputs are being dealt with
+                                    celTemp += desiredOutputsets[j] * logf(output[i]);
+                                }
+                                celTemp *= -1;
+                                crossEntropyLoss(k) += celTemp;
+                            }
                         }
                     }
                 }
             }
-        }
+            // error-contribution tracing (weight and bias simultaneously for each neuron) with nonstochastic gradient-descent implementation
+            float dC_dYhat = 0; // calculating the last term of d(C)/d(param)
+            for (int i = 0; i < countTotalIndependent_inputsets_trainingSet; i++) {
+                dC_dYhat += crossEntropyLoss[i] / output[i];
+            }
+            dC_dYhat *= -1;
 
-        recurrenceCount++;
-    }
-
-
-
-
-
-    // PREVIOUS DRAFT
-
-    // recurrence begins here
-    //int recurrenceCount = 0;
-    while (recurrenceCount < 100) { // 100 iterations
-
-        // looping until training set is exhausted
-        for (int m = 0; m < countTotalIndependent_inputsets_trainingSet / countTotalIndependent_desiredOutputsets_general; m++) {
-
-            for (int k = 0; k < countTotalIndependent_desiredOutputsets_general; k++) {
-
-                crossEntropyLoss(k) = 0; // cross-entropy loss value
-
-                // forward-pass
-                for (int i = 0; i < countTotal_layers_general; i++) { // going layer by layer
-                    //calculating the sum of the previous layer's neurons
-                    float sumOfNeuronOutputs_previousLayer = 0;
-                    for (int j = neuronLayer_firstElementPointers(i - 1); j < neuronLayer_firstElementPointers(i); j++) {
-                        sumOfNeuronOutputs_previousLayer += output(j); // contributing to the sum of the previous layer's neurons
-                    }
-
-                    //deriving the output of each neuron of the current layer (using the sum derived from the loop above)
-                    for (int j = neuronLayer_firstElementPointers(i); j < neuronLayer_firstElementPointers(i + 1); j++) { // going neuron by neuron within each layer
-                        output(j) = defaultReLU( bias(j) + (weight(j) * sumOfNeuronOutputs_previousLayer) );
-                    }
-
-                    //unload output values, apply Softmax on them, then load those Softmax-modified values into predictedOutputs
-                    float zjSum = 0; // make a zj-sum first (for Softmax)
-                    for (int j = predictedOutputsets_firstElementPointers(k - 1); j < predictedOutputsets_firstElementPointers(k); j++) { // traverse through predictedOutputsets to gauge how many outputs are being dealt with
-                        zjSum += expf(output[i]);
-                    }
-                    for (int j = predictedOutputsets_firstElementPointers(k - 1); j < predictedOutputsets_firstElementPointers(k); j++) {
-                        predictedOutputsets(j) = expf(output(predictedOutputsets(k) + j)) / zjSum; // apply zj-sum to each output of the output layer
-                    }
-
-                    // find the cross-entropy-loss
-                    float celTemp = 0;
-                    for (int j = predictedOutputsets_firstElementPointers(k - 1); j < predictedOutputsets_firstElementPointers(k); j++) { // traverse through predictedOutputsets to gauge how many outputs are being dealt with
-                        celTemp += desiredOutputsets[j] * logf(output[i]);
-                    }
-                    celTemp *= -1;
-                    crossEntropyLoss(k) += celTemp;
+            // modification of weights/biases through backpropagation
+            for (int i = countTotal_layers_general; i > 0; i--) { // going layer by layer
+                //calculating the sum of the previous layer's neurons
+                float sumOfNeuronOutputs_previousLayer = 0;
+                for (int j = neuronLayer_firstElementPointers(i - 1); j < neuronLayer_firstElementPointers(i); j++) {
+                    sumOfNeuronOutputs_previousLayer += output(j); // contributing to the sum of the previous layer's neurons
                 }
-                crossEntropyLoss(k) /= float (countTotalIndependent_desiredOutputsets_general);
-                printf("Overall Cross-Entropy Loss for iteration %d = %f", recurrenceCount, crossEntropyLoss(k));
+                weight[i] -= sumOfNeuronOutputs_previousLayer * derivative1ReLU(bias[i] + weight[i] * sumOfNeuronOutputs_previousLayer) * dC_dYhat;
+                bias[i] -= derivative1ReLU(bias[i] + weight[i] * sumOfNeuronOutputs_previousLayer) * dC_dYhat;
             }
-        }
-
-        // error-contribution tracing (weight and bias simultaneously for each neuron) with nonstochastic gradient-descent implementation
-        float dC_dYhat = 0; // calculating the last term of d(C)/d(param)
-        for (int i = 0; i < countTotalIndependent_inputsets_trainingSet; i++) {
-            dC_dYhat += crossEntropyLoss[i] / output[i];
-        }
-        dC_dYhat *= -1;
-
-        // modification of weights/biases through backpropagation
-        for (int i = countTotal_layers_general; i > 0; i--) { // going layer by layer
-            //calculating the sum of the previous layer's neurons
-            float sumOfNeuronOutputs_previousLayer = 0;
-            for (int j = neuronLayer_firstElementPointers(i - 1); j < neuronLayer_firstElementPointers(i); j++) {
-                sumOfNeuronOutputs_previousLayer += output(j); // contributing to the sum of the previous layer's neurons
-            }
-            weight[i] -= sumOfNeuronOutputs_previousLayer * derivative1ReLU(bias[i] + weight[i] * sumOfNeuronOutputs_previousLayer) * dC_dYhat;
-            bias[i] -= derivative1ReLU(bias[i] + weight[i] * sumOfNeuronOutputs_previousLayer) * dC_dYhat;
         }
 
         recurrenceCount++;
     }
 
 
-    // evaluation on testing set (coming later... stratification is required)
+
+
+
+    // evaluation of model on testing-set (coming later...)
 }
