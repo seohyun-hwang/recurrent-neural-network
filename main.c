@@ -2,9 +2,117 @@
 #include <math.h>
 
 
+// ReLU FUNCTIONS
+float defaultReLU(float input) { // ReLU function
+    if (input <= 0) {
+        return 0; // x < 0 => max(0, x) = 0
+    }
+    return input; // x > 0 => max(0, x) = x
+}
+float derivative1ReLU(float input) { // first derivative of ReLU function
+    if (defaultReLU(input) == 0) {
+        return 0; // 0' = 0
+    }
+    return 1; // x' = 1
+}
+
+// recurrence index
+int recurrenceCount = 0;
+
+// layer/neuron indices
+int layerIndex = 0; // input-layer: first layer ; output-layer: last layer ; hidden-layers: the layers inbetween
+int neuronIndex = 0;
+int neuronIndex_outputLayer = 0;
+
+// final maximum values
+const int layerIndex_max = 5; // highest layerIndex
+const int neuronIndex_maxWithinSameLayer = 10; // highest neuronIndex within same neuron-layer (input/hidden layers)
+const int neuronIndex_maxWithinOutputLayer = 2; // highest neuronIndex within output-layer
+
+// datasets
+float inputData[neuronIndex_maxWithinSameLayer];
+float weights[layerIndex_max][neuronIndex_maxWithinSameLayer][1];
+float biases[layerIndex_max][neuronIndex_maxWithinSameLayer][1];
+float layerOutput[layerIndex_max][1];
+
+
+int main(void) {
+    printf("Welcome to my artificial neural network!");
+
+    // default-presetting all neurons' weight/bias values
+    while (layerIndex < layerIndex_max) {
+        while (neuronIndex < neuronIndex_maxWithinSameLayer) {
+            weights[layerIndex][neuronIndex][0] = 1;
+            biases[layerIndex][neuronIndex][0] = 0;
+
+            neuronIndex++;
+        }
+
+        layerIndex++;
+        neuronIndex = 0;
+    }
+
+    // recurred prediction and self-correction process
+    while (recurrenceCount < 100) {
+
+        // <forward-propagation>
+        while (layerIndex < layerIndex_max) {
+            if (layerIndex == layerIndex_max) {
+                // output layer (apply Softmax)
+                float zjSum = 0;
+                while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
+                    // make a zj-sum for first stage of Softmax
+                    zjSum += expf(layerOutput[layerIndex][neuronIndex_outputLayer]);
+                    neuronIndex_outputLayer++;
+                }
+                while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
+                    // complete the Softmax
+                    layerOutput[layerIndex][neuronIndex_outputLayer] = expf(layerOutput[layerIndex][neuronIndex_outputLayer]) / zjSum;
+                    neuronIndex_outputLayer++;
+                }
+            }
+            else {
+                while (neuronIndex < neuronIndex_maxWithinSameLayer) {
+                    if (layerIndex == 0) {
+                        // input-layer
+                        layerOutput[layerIndex][0] += inputData[neuronIndex];
+                    }
+                    else {
+                        // hidden and output layers
+                        layerOutput[layerIndex][0] += defaultReLU(weights[layerIndex][neuronIndex][0] * layerOutput[layerIndex - 1][0] + biases[layerIndex][neuronIndex][0] * layerOutput[layerIndex][0]);
+                    }
+                    neuronIndex++;
+                }
+            }
+            layerIndex++;
+            neuronIndex = 0;
+        }
+        // </forward-propagation>
+
+
+        // <cross-entropy-loss-check>
+        // </cross-entropy-loss-check>
+
+
+        // <backpropagation>
+        // </backpropagation>
 
 
 
+
+        recurrenceCount++;
+        layerIndex = 0;
+    }
+
+    return 0;
+}
+
+
+
+
+
+// previous draft
+/*
 
 // SUPPORT-VARIABLES
 //for datasets
@@ -46,20 +154,6 @@ float biases[countTotal_layers_general][countTotal_neurons_general][countTotalIn
 
 // [layerIndex] [neuronIndex] [output-value]
 float outputs[countTotal_layers_general][countTotal_neurons_general][1];
-
-// SUPPORT FUNCTIONS
-float defaultReLU(float input) { // ReLU function
-    if (input <= 0) {
-        return 0; // x < 0 --> max(0, x) = 0
-    }
-    return input; // x > 0 --> max(0, x) = x
-}
-float derivative1ReLU(float input) { // first derivative of ReLU function
-    if (defaultReLU(input) != 0) {
-        return 1; // x' = 1
-    }
-    return 0; // 0' = 0
-}
 
 
 // MAIN FUNCTION
@@ -164,3 +258,4 @@ int main(void) {
 
     // evaluation of model on testing-set (coming later...)
 }
+*/
