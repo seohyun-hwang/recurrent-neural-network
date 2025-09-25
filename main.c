@@ -96,16 +96,18 @@ int main(void) {
 
         // <cross-entropy-loss-check>
         float crossEntropyLoss = 0;
-        for (int i = 0; i < neuronIndex_maxWithinOutputLayer; i++) { // traverse through predictedOutputsets to gauge how many outputs are being dealt with
-            crossEntropyLoss += outputLayerDataDesired[0][i] * logf(outputLayerDataPredicted[i]);
+        neuronIndex_outputLayer = 0;
+        while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
+            crossEntropyLoss += outputLayerDataDesired[0][neuronIndex_outputLayer] * logf(outputLayerDataPredicted[neuronIndex_outputLayer]);
+            neuronIndex_outputLayer++;
         }
         crossEntropyLoss *= -1;
+        printf("Cross-Entropy-Loss for recurrence-iteration %d: %f", recurrenceCount, crossEntropyLoss);
+        neuronIndex_outputLayer = 0;
         // </cross-entropy-loss-check>
 
 
-        // <backpropagation>
-        // </backpropagation>
-
+        // <backpropagation></backpropagation>
 
 
 
