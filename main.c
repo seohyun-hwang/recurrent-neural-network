@@ -20,13 +20,15 @@ float derivative1ReLU(float input) { // first derivative of ReLU function
 int recurrenceCount = 0;
 
 // layer/neuron indices
+int inputsetIndex = 0;
 int layerIndex = 0; // input-layer: first layer ; output-layer: last layer ; hidden-layers: the layers inbetween
 int neuronIndex = 0;
 int neuronIndex_outputLayer = 0;
 
 // final maximum values
 const int layerIndex_max = 5; // highest layerIndex
-const int neuronIndex_maxWithinSameLayer = 10; // highest neuronIndex within same neuron-layer (input/hidden layers)
+const int inputsetIndex_max = 5; // highest inputsetIndex
+const int neuronIndex_maxWithinSameLayer = 5; // highest neuronIndex within same neuron-layer (input/hidden layers)
 const int neuronIndex_maxWithinOutputLayer = 2; // highest neuronIndex within output-layer
 
 // datasets
@@ -34,7 +36,7 @@ float weights[layerIndex_max][neuronIndex_maxWithinSameLayer][1];
 float biases[layerIndex_max][neuronIndex_maxWithinSameLayer][1];
 float layerSummationOutput[layerIndex_max - 1][1];
 
-float inputData[neuronIndex_maxWithinSameLayer];
+float inputDatasets[inputsetIndex_max][neuronIndex_maxWithinSameLayer][0];
 float outputLayerDataPredicted[neuronIndex_maxWithinOutputLayer][1];
 float outputLayerDataDesired[1][neuronIndex_maxWithinOutputLayer][1]; // [index of the type of desired output][neuron value]
 
@@ -45,6 +47,37 @@ int main(void) {
     // setting the DESIRED outputset (only)
     outputLayerDataDesired[0][0][0] = 0;
     outputLayerDataDesired[0][1][0] = 1;
+
+    // setting the inputsets
+    inputDatasets[0][0][0] = 0;
+    inputDatasets[0][1][0] = 2;
+    inputDatasets[0][2][0] = 5;
+    inputDatasets[0][3][0] = 2;
+    inputDatasets[0][4][0] = 1;
+
+    inputDatasets[1][0][0] = 3;
+    inputDatasets[1][1][0] = 0;
+    inputDatasets[1][2][0] = 0;
+    inputDatasets[1][3][0] = 3;
+    inputDatasets[1][4][0] = 9;
+
+    inputDatasets[2][0][0] = 4;
+    inputDatasets[2][1][0] = 6;
+    inputDatasets[2][2][0] = 2;
+    inputDatasets[2][3][0] = 2;
+    inputDatasets[2][4][0] = 0;
+
+    inputDatasets[3][0][0] = 9;
+    inputDatasets[3][1][0] = 2;
+    inputDatasets[3][2][0] = 5;
+    inputDatasets[3][3][0] = 2;
+    inputDatasets[3][4][0] = 2;
+
+    inputDatasets[4][0][0] = 5;
+    inputDatasets[4][1][0] = 6;
+    inputDatasets[4][2][0] = 5;
+    inputDatasets[4][3][0] = 7;
+    inputDatasets[4][4][0] = 7;
 
     // default-presetting all neurons' weight/bias values
     while (layerIndex < layerIndex_max) {
@@ -64,33 +97,36 @@ int main(void) {
 
         // <forward-propagation>
         while (layerIndex < layerIndex_max) {
-            while (neuronIndex < neuronIndex_maxWithinSameLayer) {
-                if (layerIndex == 0) {
-                    // input-layer
-                    layerSummationOutput[layerIndex][0] += inputData[neuronIndex];
+            while (inputsetIndex < inputsetIndex_max) {
+                while (neuronIndex < neuronIndex_maxWithinSameLayer) {
+                    if (layerIndex == 0) {
+                        // input-layer
+                        layerSummationOutput[layerIndex][0] += inputDatasets[inputsetIndex][neuronIndex][0];
+                    }
+                    else {
+                        // hidden AND output layers
+                        layerSummationOutput[layerIndex][0] += defaultReLU(weights[layerIndex][neuronIndex][0] * layerSummationOutput[layerIndex - 1][0] + biases[layerIndex][neuronIndex][0] * layerSummationOutput[layerIndex][0]);
+                    }
+                    neuronIndex++;
                 }
-                else {
-                    // hidden AND output layers
-                    layerSummationOutput[layerIndex][0] += defaultReLU(weights[layerIndex][neuronIndex][0] * layerSummationOutput[layerIndex - 1][0] + biases[layerIndex][neuronIndex][0] * layerSummationOutput[layerIndex][0]);
+                if (layerIndex == layerIndex_max) {
+                    // output layer (apply Softmax)
+                    float zjSum = 0;
+                    while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
+                        // make a zj-sum for first stage of Softmax
+                        zjSum += expf(layerSummationOutput[layerIndex][neuronIndex_outputLayer]);
+                        neuronIndex_outputLayer++;
+                    }
+                    while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
+                        // complete the Softmax
+                        layerSummationOutput[layerIndex][neuronIndex_outputLayer] = expf(layerSummationOutput[layerIndex][neuronIndex_outputLayer]) / zjSum;
+                        neuronIndex_outputLayer++;
+                    }
                 }
-                neuronIndex++;
-            }
-            if (layerIndex == layerIndex_max) {
-                // output layer (apply Softmax)
-                float zjSum = 0;
-                while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
-                    // make a zj-sum for first stage of Softmax
-                    zjSum += expf(layerSummationOutput[layerIndex][neuronIndex_outputLayer]);
-                    neuronIndex_outputLayer++;
-                }
-                while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
-                    // complete the Softmax
-                    layerSummationOutput[layerIndex][neuronIndex_outputLayer] = expf(layerSummationOutput[layerIndex][neuronIndex_outputLayer]) / zjSum;
-                    neuronIndex_outputLayer++;
-                }
+                neuronIndex = 0;
+                inputsetIndex++;
             }
             layerIndex++;
-            neuronIndex = 0;
         }
         // </forward-propagation>
 
