@@ -16,8 +16,6 @@ float derivative1ReLU(float input) { // first derivative of ReLU function
     return 1; // x' = 1
 }
 
-// recurrence index
-int recurrenceCount = 0;
 
 // layer/neuron indices
 int inputsetIndex = 0;
@@ -93,7 +91,8 @@ int main(void) {
     }
 
     // recurred prediction and self-correction process
-    while (recurrenceCount < 100) {
+    int recurrenceIndex = 1;
+    while (recurrenceIndex <= 100) {
 
         // <forward-propagation>
         while (layerIndex < layerIndex_max) {
@@ -139,7 +138,7 @@ int main(void) {
             neuronIndex_outputLayer++;
         }
         crossEntropyLoss *= -1;
-        printf("\nCross-Entropy-Loss for recurrence-iteration %d: %f", recurrenceCount, crossEntropyLoss);
+        printf("\nCross-Entropy-Loss for recurrence-iteration %d: %f", recurrenceIndex, crossEntropyLoss);
         neuronIndex_outputLayer = 0;
         // </cross-entropy-loss-check>
 
@@ -166,7 +165,7 @@ int main(void) {
 
         // </backpropagation>
 
-        recurrenceCount++;
+        recurrenceIndex++;
         layerIndex = 0;
     }
 
