@@ -30,20 +30,21 @@ const int neuronIndex_maxWithinSameLayer = 10; // highest neuronIndex within sam
 const int neuronIndex_maxWithinOutputLayer = 2; // highest neuronIndex within output-layer
 
 // datasets
-float inputData[neuronIndex_maxWithinSameLayer];
 float weights[layerIndex_max][neuronIndex_maxWithinSameLayer][1];
 float biases[layerIndex_max][neuronIndex_maxWithinSameLayer][1];
 float layerSummationOutput[layerIndex_max - 1][1];
-float outputLayerDataPredicted[neuronIndex_maxWithinOutputLayer];
-float outputLayerDataDesired[1][neuronIndex_maxWithinOutputLayer]; // [set][neuron value]
+
+float inputData[neuronIndex_maxWithinSameLayer];
+float outputLayerDataPredicted[neuronIndex_maxWithinOutputLayer][1];
+float outputLayerDataDesired[1][neuronIndex_maxWithinOutputLayer][1]; // [index of the type of desired output][neuron value]
 
 
 int main(void) {
-    printf("Welcome to my artificial neural network!");
+    printf("Welcome to my artificial neural network!\n\n");
 
-    // setting the desired outputset
-    outputLayerDataDesired[0][0] = 0;
-    outputLayerDataDesired[0][1] = 1;
+    // setting the DESIRED outputset (only)
+    outputLayerDataDesired[0][0][0] = 0;
+    outputLayerDataDesired[0][1][0] = 1;
 
     // default-presetting all neurons' weight/bias values
     while (layerIndex < layerIndex_max) {
@@ -98,18 +99,36 @@ int main(void) {
         float crossEntropyLoss = 0;
         neuronIndex_outputLayer = 0;
         while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
-            crossEntropyLoss += outputLayerDataDesired[0][neuronIndex_outputLayer] * logf(outputLayerDataPredicted[neuronIndex_outputLayer]);
+            crossEntropyLoss += outputLayerDataDesired[0][neuronIndex_outputLayer][0] * logf(outputLayerDataPredicted[neuronIndex_outputLayer][0]);
             neuronIndex_outputLayer++;
         }
         crossEntropyLoss *= -1;
-        printf("Cross-Entropy-Loss for recurrence-iteration %d: %f", recurrenceCount, crossEntropyLoss);
+        printf("\nCross-Entropy-Loss for recurrence-iteration %d: %f", recurrenceCount, crossEntropyLoss);
         neuronIndex_outputLayer = 0;
         // </cross-entropy-loss-check>
 
 
-        // <backpropagation></backpropagation>
+        // <backpropagation> // error-contribution tracing of biases and weights
 
+        float dC_dYhat = 0; // calculating the last term of d(C)/d(param) [the value of the contribution of the predicted output value to the overall cost]
+        neuronIndex_outputLayer = 0;
+        while (neuronIndex_outputLayer < neuronIndex_maxWithinOutputLayer) {
+            dC_dYhat += (outputLayerDataDesired[0][neuronIndex_outputLayer][0] / outputLayerDataPredicted[neuronIndex_outputLayer][0]);
+            neuronIndex_outputLayer++;
+        }
+        dC_dYhat *= -1;
+        neuronIndex_outputLayer = 0;
 
+        // modification of weights/biases through backpropagation
+        layerIndex = 1;
+        while (layerIndex < layerIndex_max) {
+            weights[layerIndex][neuronIndex][0] -= layerSummationOutput[layerIndex - 1][0] * derivative1ReLU(biases[layerIndex][neuronIndex][0] + weights[layerIndex][neuronIndex][0] * layerSummationOutput[layerIndex - 1][0]) * dC_dYhat;
+            biases[layerIndex][neuronIndex][0] -= derivative1ReLU(biases[layerIndex][neuronIndex][0] + weights[layerIndex][neuronIndex][0] * layerSummationOutput[layerIndex - 1][0]) * dC_dYhat;
+            layerIndex++;
+        }
+        layerIndex = 0;
+
+        // </backpropagation>
 
         recurrenceCount++;
         layerIndex = 0;
